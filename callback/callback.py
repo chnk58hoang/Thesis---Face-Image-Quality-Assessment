@@ -9,8 +9,6 @@ class MyCallBack(pl.Callback):
         self.val_loader = val_loader
 
     def on_validation_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):
-        sharp_mae = 0.0
-        illu_mae = 0.0
         q_mae = 0.0
         count = 0
         for batch_idx, batch in tqdm(enumerate(self.val_loader)):

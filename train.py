@@ -39,7 +39,7 @@ class EXFIQA(pl.LightningModule):
         image,qscore = batch
         qscore = qscore.to(self._device)
         pred_qscore = self.forward(image)
-        loss3 = self.loss3(qscore, pred_qscore)
+        loss3 = self.mse(qscore, pred_qscore)
         return {'loss': loss3}
 
     def validation_step(self, batch, batch_idx):
