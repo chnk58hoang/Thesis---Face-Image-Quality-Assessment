@@ -46,7 +46,7 @@ class EXFIQA(pl.LightningModule):
         pass
 
 if __name__ == '__main__':
-    dataframe = pd.read_csv('data.csv')
+    dataframe = pd.read_csv('/kaggle/input/train-q-only/MYFIQAC/data.csv')
 
     # test_len = int(len(dataframe) * 0.2)
     train_dataframe = dataframe.iloc[:64148, :]

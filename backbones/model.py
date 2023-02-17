@@ -24,7 +24,7 @@ class Explainable_FIQA(nn.Module):
     def __init__(self,train_q_only = False):
         super().__init__()
         self.backbone = nn.Sequential(*(list(resnet50().children())[:-1]))
-        load_state_dict(self.backbone,fname='resnet50_ft_weight.pkl')
+        load_state_dict(self.backbone,fname='/kaggle/input/train-q-only/MYFIQAC/resnet50_ft_weight.pkl')
         self.medium = nn.Sequential(*[nn.LazyLinear(256), nn.LazyLinear(64)])
         self.quality = nn.Sequential(*[nn.LazyLinear(32), nn.LazyLinear(16), nn.LazyLinear(1)])
 
