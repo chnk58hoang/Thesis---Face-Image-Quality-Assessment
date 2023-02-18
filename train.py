@@ -75,3 +75,5 @@ if __name__ == '__main__':
         val_loss = train_model(model, val_dataloader, val_dataset, loss_fn, device)
         print(f'Valid_loss:{val_loss}')
         lr_scheduler.step(val_loss)
+
+    torch.save(model.state_dict(),'model.pth')
