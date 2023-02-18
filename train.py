@@ -72,7 +72,7 @@ if __name__ == '__main__':
         print(f'Epoch:{epoch}:')
         trainloss = train_model(model, train_dataloader, train_dataset, opt, loss_fn, device)
         print(f'Train_loss:{trainloss}')
-        val_loss = train_model(model, val_dataloader, val_dataset, loss_fn, device)
+        val_loss = valid_model(model, val_dataloader, val_dataset, loss_fn, device)
         print(f'Valid_loss:{val_loss}')
         lr_scheduler.step(val_loss)
 
