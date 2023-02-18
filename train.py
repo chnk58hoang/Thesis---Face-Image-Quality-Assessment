@@ -1,70 +1,77 @@
 from backbones.model import Explainable_FIQA
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
-from callback.callback import MyCallBack
-from pytorch_lightning.callbacks import LearningRateMonitor
-import pytorch_lightning as pl
+from tqdm import tqdm
 import torch.nn as nn
 import pandas as pd
 import torch
+import argparse
 
 
-class EXFIQA(pl.LightningModule):
-    def __init__(self, model, train_loader, val_loader, device):
-        super().__init__()
-        self.model = model
-        self._device = device
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.mse = nn.MSELoss()
+def train_model(model, dataloader, dataset, optimizers, loss_fn, device):
+    model.train()
+    train_loss = 0.0
+    count = 0
 
-    def forward(self, image):
-        image = image.to(self._device)
-        return self.model(image)
+    for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
+        count += 1
+        optimizers.zero_grad()
+        image = data[0].to(device)
+        qscore = data[1].to(device)
+        pred_qscore = model(image)
+        loss = loss_fn(qscore, pred_qscore)
+        train_loss += loss.item()
 
-    def configure_optimizers(self):
-        optim1 = torch.optim.Adam(self.model.quality.parameters(), lr=1e-2)
+        loss.backward()
+        optimizers.step()
+
+    return train_loss / count
 
 
-        return optim1
+def valid_model(model, dataloader, dataset, loss_fn, device):
+    model.eval()
+    train_loss = 0.0
+    count = 0
 
-    def train_dataloader(self):
-        return self.train_loader
+    for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
+        count += 1
+        image = data[0].to(device)
+        qscore = data[1].to(device)
+        pred_qscore = model(image)
+        loss = loss_fn(qscore, pred_qscore)
+        train_loss += loss.item()
 
-    def val_dataloader(self):
-        return self.val_loader
+    return train_loss / count
 
-    def training_step(self, batch, batch_idx):
-
-        image,qscore = batch
-        qscore = qscore.to(self._device)
-        pred_qscore = self.forward(image)
-        loss3 = self.mse(qscore, pred_qscore)
-        return {'loss': loss3}
-
-    def validation_step(self, batch, batch_idx):
-        pass
 
 if __name__ == '__main__':
-    dataframe = pd.read_csv('/kaggle/input/train-q-only/MYFIQAC/data.csv')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epochs', type=int)
+    parser.add_argument('--csv', type=str)
+    parser.add_argument('--weight', type=str)
+    args = parser.parse_args()
 
-    # test_len = int(len(dataframe) * 0.2)
-    train_dataframe = dataframe.iloc[:64148, :]
-    valid_dataframe = dataframe.iloc[64148:80185, :]
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = Explainable_FIQA(train_q_only=True,weight_path=args.weight).to(device)
 
+    train_val_dataframe = pd.read_csv(args.csv).iloc[:80186, :]
+    train_df = train_val_dataframe.iloc[:60000, :]
+    val_df = train_val_dataframe.iloc[60000:, :]
 
-    model = Explainable_FIQA()
-    train_dataset = ExFIQA(df=train_dataframe)
-    valid_dataset = ExFIQA(df=valid_dataframe)
+    train_dataset = ExFIQA(df=train_df)
+    val_dataset = ExFIQA(df=val_df)
 
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=8)
-    val_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False, num_workers=8)
+    train_dataloader = DataLoader(train_dataset, batch_size=32)
+    val_dataloader = DataLoader(val_dataset, batch_size=32)
 
-    module = EXFIQA(model=model, train_loader=train_loader, val_loader=val_loader, device=torch.device('cuda'))
-    callback = MyCallBack(val_loader)
-    lr_monitor = LearningRateMonitor(logging_interval='step')
+    loss_fn = nn.SmoothL1Loss()
+    opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.5, optimizer=opt)
 
-    trainer = pl.Trainer(max_epochs=20, callbacks=[callback, lr_monitor], auto_lr_find=True, accelerator='gpu')
-
-    trainer.fit(module)
-    torch.save(model.state_dict(), 'model.pth')
+    for epoch in range(args.epochs):
+        print(f'Epoch:{epoch}:')
+        trainloss = train_model(model, train_dataloader, train_dataset, opt, loss_fn, device)
+        print(f'Train_loss:{trainloss}')
+        val_loss = train_model(model, val_dataloader, val_dataset, loss_fn, device)
+        print(f'Valid_loss:{val_loss}')
+        lr_scheduler.step(val_loss)
