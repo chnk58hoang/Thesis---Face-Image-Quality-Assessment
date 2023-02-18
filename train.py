@@ -64,12 +64,12 @@ if __name__ == '__main__':
     train_dataloader = DataLoader(train_dataset, batch_size=32)
     val_dataloader = DataLoader(val_dataset, batch_size=32)
 
-    loss_fn = nn.SmoothL1Loss()
+    loss_fn = nn.L1Loss()
     opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.5, optimizer=opt)
 
     for epoch in range(args.epochs):
-        print(f'Epoch:{epoch}:')
+        print(f'Epoch:{epoch}')
         trainloss = train_model(model, train_dataloader, train_dataset, opt, loss_fn, device)
         print(f'Train_loss:{trainloss}')
         val_loss = valid_model(model, val_dataloader, val_dataset, loss_fn, device)
