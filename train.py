@@ -2,6 +2,7 @@ from backbones.model import Explainable_FIQA
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from engine import Trainer
 import torch.nn as nn
 import pandas as pd
 import torch
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = Explainable_FIQA(train_q_only=True,weight_path=args.weight).to(device)
+    model = Explainable_FIQA(train_q_only=True, weight_path=args.weight).to(device)
 
     train_val_dataframe = pd.read_csv(args.csv).iloc[:80186, :]
     train_df = train_val_dataframe.iloc[:60000, :]
@@ -66,7 +67,9 @@ if __name__ == '__main__':
 
     loss_fn = nn.L1Loss()
     opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.5, optimizer=opt)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
+
+    trainer = Trainer(lr_scheduler)
 
     for epoch in range(args.epochs):
         print(f'Epoch:{epoch}')
@@ -74,6 +77,6 @@ if __name__ == '__main__':
         print(f'Train_loss:{trainloss}')
         val_loss = valid_model(model, val_dataloader, val_dataset, loss_fn, device)
         print(f'Valid_loss:{val_loss}')
-        lr_scheduler.step(val_loss)
-
-    torch.save(model.state_dict(),'model.pth')
+        trainer(val_loss,model)
+        if trainer.stop:
+            break
