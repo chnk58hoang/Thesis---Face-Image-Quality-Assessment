@@ -28,12 +28,11 @@ class Explainable_FIQA(nn.Module):
         self.backbone = nn.Sequential(*(list(resnet50().children())[:-1]))
         load_state_dict(self.backbone, fname=weight_path)
         self.medium = nn.Sequential(*[nn.LazyLinear(256), nn.LazyLinear(64)])
-        self.quality = nn.Sequential(*[nn.LazyLinear(32), nn.LazyLinear(16), nn.LazyLinear(1)])
+        self.quality = nn.Sequential(*[nn.LazyLinear(32), nn.LazyLinear(16), nn.LazyLinear(2)])
 
     def forward(self, x):
         feature = self.backbone(x)
         feature = feature.reshape(feature.size(0), -1)
         medium = self.medium(feature)
         qscore = self.quality(medium)
-        qscore = qscore.reshape(-1)
         return qscore
