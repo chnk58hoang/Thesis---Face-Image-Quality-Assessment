@@ -21,4 +21,4 @@ class ExFIQA(Dataset):
         #                            '/home/artorias/Downloads/multi_PIE_crop_128')
         image = Image.open(img_path)
         image = self.image_transform(image)
-        return image, pose
+        return image, int(pose)
