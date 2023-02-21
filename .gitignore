@@ -2,3 +2,4 @@
 __pycache__/
 resnet50_ft_weight.pkl
 data.csv
+best_model.pth
