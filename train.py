@@ -42,12 +42,12 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        all_labels.append(data[1])
+        all_labels.append(list(data[1]))
         pred_pose = model(image)
         loss = loss_fn(pred_pose,pose)
         train_loss += loss.item()
         pred = pred_pose.max(1)[1]
-        all_preds.append(pred)
+        all_preds.append(list(pred))
 
     all_labels = torch.tensor(all_labels, dtype=int).resize(1, len(dataset)).squeeze(0)
     all_preds = torch.tensor(all_preds, dtype=int).resize(1, len(dataset)).squeeze(0)
