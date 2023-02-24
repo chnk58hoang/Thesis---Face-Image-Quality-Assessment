@@ -65,11 +65,13 @@ if __name__ == '__main__':
     parser.add_argument('--weight1', type=str)
     parser.add_argument('--weight2', type=str)
     parser.add_argument('--batch_size', type=int)
+    parser.add_argument('--load',type=bool)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = Explainable_FIQA(train_q_only=True, weight_path=args.weight1)
-    #model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
+    if args.load:
+        model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
 
     train_val_dataframe = pd.read_csv(args.csv).iloc[:80186, :]
