@@ -86,6 +86,7 @@ if __name__ == '__main__':
     all_preds = []
     all_labels = []
 
+    model.eval()
     for idx, data in tqdm(enumerate(test_dataloader), total=int(len(test_dataset) / test_dataloader.batch_size)):
 
         image = data[0].to(device)
