@@ -80,7 +80,7 @@ if __name__ == '__main__':
     test_dataset = ExFIQA(df=test_df)
 
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size)
-    f1 = F1Score(task='multiclass', num_classes=2)
+    f1 = F1Score(task='multiclass', num_classes=2,average='macro')
 
     print('Starting test...')
     all_preds = []
