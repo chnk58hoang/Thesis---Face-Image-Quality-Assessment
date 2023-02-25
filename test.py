@@ -1,10 +1,9 @@
-import torch
-import torch.nn as nn
+import pandas as pd
 
-input = torch.randn(3, 5, requires_grad=True)
-print(input.size())
-loss = nn.CrossEntropyLoss()
-target = torch.empty(3, dtype=torch.long).random_(5)
-print(input)
-print(target.size())
-print(loss(input,target))
+df = pd.read_csv('data.csv')
+
+l1 = df[df['br']==0]
+l2 = df[df['br']==1]
+
+print(len(l1))
+print(len(l2))

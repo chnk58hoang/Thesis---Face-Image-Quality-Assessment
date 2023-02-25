@@ -16,9 +16,9 @@ class ExFIQA(Dataset):
     def __getitem__(self, index):
         img_path = self.dataframe.iloc[index]['path']
         pose = self.dataframe.iloc[index]['pose']
-
-        #img_path = img_path.replace('/kaggle/input/multicmu/multi_PIE_crop_128',
+        br = self.dataframe.iloc[index]['br']
+        # img_path = img_path.replace('/kaggle/input/multicmu/multi_PIE_crop_128',
         #                            '/home/artorias/Downloads/multi_PIE_crop_128')
         image = Image.open(img_path)
         image = self.image_transform(image)
-        return image, int(pose)
+        return image, int(pose), int(br)
