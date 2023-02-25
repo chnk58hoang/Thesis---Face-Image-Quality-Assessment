@@ -25,7 +25,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device, alpha):
         pred_pose, pred_br = model(image)
         pose_loss = loss_fn(pred_pose, pose)
         br_loss = loss_fn(pred_br, br)
-        loss = alpha * pose_loss + (1 - alpha) * br_loss
+        loss =  pose_loss +  br_loss
         train_loss += loss.item()
         loss.backward()
 
@@ -52,7 +52,7 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1, alpha):
         pred_pose, pred_br = model(image)
         pose_loss = loss_fn(pred_pose, pose)
         br_poss = loss_fn(pred_br, br)
-        loss = alpha * pose_loss + (1 - alpha) * br_poss
+        loss = pose_loss +  br_poss
         train_loss += loss.item()
         ppose = pred_pose.max(1)[1]
         pbr = pred_br.max(1)[1]

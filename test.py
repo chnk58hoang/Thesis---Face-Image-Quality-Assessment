@@ -1,9 +1,11 @@
-import pandas as pd
+def reverseWords(s: str) -> str:
+    words = s.split(" ")
 
-df = pd.read_csv('data.csv')
+    for i in range(len(words)):
+        words[i] = words[i][::-1]
 
-l1 = df[df['br']==0]
-l2 = df[df['br']==1]
+    print(words)
+    res = " ".join(words)
+    return res
 
-print(len(l1))
-print(len(l2))
+reverseWords('hiang dep trai')
