@@ -73,7 +73,7 @@ if __name__ == '__main__':
     train_val_dataframe = pd.read_csv(args.csv).iloc[:80186, :]
     train_df = train_val_dataframe.iloc[:60000, :]
     val_df = train_val_dataframe.iloc[60000:, :]
-    test_df = train_val_dataframe.iloc[80186:, :]
+    test_df = pd.read_csv(args.csv).iloc[80186:, :]
 
     train_dataset = ExFIQA(df=train_df)
     val_dataset = ExFIQA(df=val_df)
