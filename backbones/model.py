@@ -45,7 +45,7 @@ class BrightClassifier(nn.Module):
     def forward(self, x, pose_represent):
         x = self.fc1(x)
         x = self.fc2(x)
-        x = torch.cat([x, pose_represent], dim=1)
+        #x = torch.cat([x, pose_represent], dim=1)
         br = self.classifier(x)
         return br
 
