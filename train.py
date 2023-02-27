@@ -24,7 +24,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
-        pose.backward()
+        pose_loss.backward()
         optimizer.step()
 
     return train_loss / count
