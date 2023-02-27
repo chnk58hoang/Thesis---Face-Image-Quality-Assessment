@@ -22,7 +22,4 @@ class XFIQA(nn.Module):
         return pose
 
 
-image = torch.rand(1, 3, 112, 112)
-model = XFIQA(weight_path='/home/artorias/PycharmProjects/MYFIQAC/181952backbone.pth')
-x = model(image)
-print(x.size())
+
