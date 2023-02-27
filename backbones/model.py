@@ -1,8 +1,8 @@
 from torchvision.models import resnet50
-from iresnet import iresnet50
+from backbones.iresnet import iresnet50
 import torch.nn as nn
 import torch
-import pickle
+
 
 
 class XFIQA(nn.Module):
