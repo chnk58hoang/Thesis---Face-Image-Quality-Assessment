@@ -1,4 +1,3 @@
-from torchvision.models import resnet50
 from backbones.iresnet import iresnet50
 import torch.nn as nn
 import torch
@@ -9,9 +8,10 @@ class XFIQA(nn.Module):
     def __init__(self, weight_path=None):
         super().__init__()
         self.backbone = nn.Sequential(*list(iresnet50().children())[:5])
-        self.backbone.load_state_dict(torch.load(weight_path),strict=False)
-        self.medium = nn.LazyLinear(64)
-        self.pose_classifier = nn.Sequential(*[nn.LazyLinear(32),nn.LazyLinear(2)])
+        self.backbone.load_state_dict(torch.load(weight_path), strict=False)
+        self.medium = nn.Sequential(
+            *[nn.LazyLinear(512), nn.LazyLinear(128), nn.LazyLinear(32), nn.LazyLinear(4)])
+        self.pose_classifier = nn.Sequential(*[nn.LazyLinear(128), nn.LazyLinear(32), nn.LazyLinear(2)])
 
     def forward(self, image):
         image = self.backbone(image)

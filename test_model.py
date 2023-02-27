@@ -1,9 +1,6 @@
-from backbones.model import Explainable_FIQA
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from engine import Trainer
-import torch.nn as nn
 import pandas as pd
 import torch
 import argparse
