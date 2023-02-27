@@ -8,7 +8,7 @@ class ExFIQA(Dataset):
         super().__init__()
         self.dataframe = df
         self.image_transform = transforms.Compose([transforms.ToTensor(),
-                                                   transforms.Resize(224)])
+                                                   transforms.Resize(112)])
 
     def __len__(self):
         return len(self.dataframe)
@@ -16,9 +16,9 @@ class ExFIQA(Dataset):
     def __getitem__(self, index):
         img_path = self.dataframe.iloc[index]['path']
         pose = self.dataframe.iloc[index]['pose']
-        br = self.dataframe.iloc[index]['br']
+        #br = self.dataframe.iloc[index]['br']
         # img_path = img_path.replace('/kaggle/input/multicmu/multi_PIE_crop_128',
         #                            '/home/artorias/Downloads/multi_PIE_crop_128')
         image = Image.open(img_path)
         image = self.image_transform(image)
-        return image, int(pose), int(br)
+        return image, int(pose)

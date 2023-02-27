@@ -1,4 +1,4 @@
-from backbones.model import Explainable_FIQA
+from backbones.model import XFIQA
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -10,7 +10,7 @@ import argparse
 from torchmetrics.classification import F1Score
 
 
-def train_model(model, dataloader, dataset, optimizer, loss_fn, device, alpha):
+def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
     model.train()
     train_loss = 0.0
     count = 0
@@ -18,59 +18,45 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device, alpha):
     for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
         count += 1
         optimizer.zero_grad()
-
         image = data[0].to(device)
         pose = data[1].to(device)
-        br = data[2].to(device)
-        pred_pose, pred_br = model(image)
+        pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
-        br_loss = loss_fn(pred_br, br)
-        loss =  pose_loss +  br_loss
-        train_loss += loss.item()
-        loss.backward()
 
+        train_loss += pose_loss.item()
+        pose.backward()
         optimizer.step()
 
     return train_loss / count
 
 
-def valid_model(model, dataloader, dataset, loss_fn, device, f1, alpha):
+def valid_model(model, dataloader, dataset, loss_fn, device, f1):
     model.eval()
     train_loss = 0.0
     count = 0
     all_pose_preds = []
     all_pose_labels = []
 
-    all_br_preds = []
-    all_br_labels = []
 
     for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        br = data[2].to(device)
-        pred_pose, pred_br = model(image)
+        pred_pose= model(image)
         pose_loss = loss_fn(pred_pose, pose)
-        br_poss = loss_fn(pred_br, br)
-        loss = pose_loss +  br_poss
-        train_loss += loss.item()
+
+        train_loss += pose_loss.item()
         ppose = pred_pose.max(1)[1]
-        pbr = pred_br.max(1)[1]
         for i in range(len(data[1])):
             all_pose_labels.append(data[1][i])
-            all_br_labels.append(data[2][i])
             all_pose_preds.append(ppose[i])
-            all_br_preds.append(pbr[i])
+
 
     all_pose_labels = torch.tensor(all_pose_labels, dtype=int).resize(1, len(dataset)).squeeze(0)
     all_pose_preds = torch.tensor(all_pose_preds, dtype=int).resize(1, len(dataset)).squeeze(0)
     f1_pose = f1(all_pose_preds, all_pose_labels)
 
-    all_br_labels = torch.tensor(all_br_labels, dtype=int).resize(1, len(dataset)).squeeze(0)
-    all_br_preds = torch.tensor(all_br_preds, dtype=int).resize(1, len(dataset)).squeeze(0)
-    f1_br = f1(all_br_preds, all_br_labels)
-
-    return train_loss / count, f1_pose, f1_br
+    return train_loss / count, f1_pose
 
 
 if __name__ == '__main__':
@@ -81,13 +67,12 @@ if __name__ == '__main__':
     parser.add_argument('--weight2', type=str)
     parser.add_argument('--batch_size', type=int)
     parser.add_argument('--load', type=bool)
-    parser.add_argument('--alpha', type=float, default=0.8)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = Explainable_FIQA(train_q_only=True, weight_path=args.weight1)
-    if args.load:
-        model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
+    model = XFIQA(weight_path=args.weight1)
+    #if args.load:
+    #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
 
     train_val_dataframe = pd.read_csv(args.csv).iloc[:80186, :]
@@ -108,12 +93,11 @@ if __name__ == '__main__':
 
     for epoch in range(args.epochs):
         print(f'Epoch:{epoch}')
-        trainloss = train_model(model, train_dataloader, train_dataset, opt, loss_fn, device, args.alpha)
+        trainloss = train_model(model, train_dataloader, train_dataset, opt, loss_fn, device)
         print(f'Train_loss:{trainloss}')
-        val_loss, f1_pose, f1_br = valid_model(model, val_dataloader, val_dataset, loss_fn, device, f1, args.alpha)
+        val_loss, f1_pose = valid_model(model, val_dataloader, val_dataset, loss_fn, device, f1)
         print(f'Valid_loss:{val_loss}')
         print(f'F1_pose:{f1_pose}')
-        print(f'F1_brightness:{f1_br}')
         trainer(val_loss, model)
         if trainer.stop:
             break
