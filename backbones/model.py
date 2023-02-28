@@ -8,10 +8,10 @@ class XFIQA(nn.Module):
         super().__init__()
         self.backbone = nn.Sequential(*list(iresnet50().children())[:-2])
         self.backbone.load_state_dict(torch.load(weight_path), strict=False)
-        for param in self.backbone.parameters():
-            param.requires_grad = False
-        self.fc1 = nn.LazyLinear(1024)
-        self.fc2 = nn.LazyLinear(256)
+
+        self.fc1 = nn.LazyLinear(512)
+        self.fc2 = nn.LazyLinear(128)
+        self.fc3 = nn.LazyLinear(32)
         self.pose_classifier = nn.LazyLinear(7)
 
     def forward(self, image):
