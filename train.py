@@ -66,7 +66,6 @@ if __name__ == '__main__':
     parser.add_argument('--weight1', type=str)
     parser.add_argument('--weight2', type=str)
     parser.add_argument('--batch_size', type=int)
-    parser.add_argument('--load', type=bool)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -88,7 +87,7 @@ if __name__ == '__main__':
     loss_fn = nn.CrossEntropyLoss()
     opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
-    f1 = F1Score(task='multiclass', num_classes=2, average='macro')
+    f1 = F1Score(task='multiclass', num_classes=7, average='none')
     trainer = Trainer(lr_scheduler)
 
     for epoch in range(args.epochs):
@@ -97,7 +96,7 @@ if __name__ == '__main__':
         print(f'Train_loss:{trainloss}')
         val_loss, f1_pose = valid_model(model, val_dataloader, val_dataset, loss_fn, device, f1)
         print(f'Valid_loss:{val_loss}')
-        print(f'F1_pose:{f1_pose}')
+        print(f'F1_pose: {f1_pose}')
         trainer(val_loss, model)
         if trainer.stop:
             break

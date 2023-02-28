@@ -5,3 +5,4 @@ data.csv
 best_model.pth
 bestqscore.pth
 181952backbone.pth
+new_data.csv
