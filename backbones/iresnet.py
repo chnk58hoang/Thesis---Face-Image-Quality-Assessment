@@ -23,6 +23,8 @@ def conv1x1(in_planes, out_planes, stride=1):
                      kernel_size=1,
                      stride=stride,
                      bias=False)
+
+
 class SEModule(nn.Module):
     def __init__(self, channels, reduction):
         super(SEModule, self).__init__()
@@ -42,26 +44,28 @@ class SEModule(nn.Module):
 
         return input * x
 
+
 class IBasicBlock(nn.Module):
     expansion = 1
+
     def __init__(self, inplanes, planes, stride=1, downsample=None,
-                 groups=1, base_width=64, dilation=1,use_se=False):
+                 groups=1, base_width=64, dilation=1, use_se=False):
         super(IBasicBlock, self).__init__()
         if groups != 1 or base_width != 64:
             raise ValueError('BasicBlock only supports groups=1 and base_width=64')
         if dilation > 1:
             raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
-        self.bn1 = nn.BatchNorm2d(inplanes, eps=1e-05,)
+        self.bn1 = nn.BatchNorm2d(inplanes, eps=1e-05, )
         self.conv1 = conv3x3(inplanes, planes)
-        self.bn2 = nn.BatchNorm2d(planes, eps=1e-05,)
+        self.bn2 = nn.BatchNorm2d(planes, eps=1e-05, )
         self.prelu = nn.PReLU(planes)
         self.conv2 = conv3x3(planes, planes, stride)
-        self.bn3 = nn.BatchNorm2d(planes, eps=1e-05,)
+        self.bn3 = nn.BatchNorm2d(planes, eps=1e-05, )
         self.downsample = downsample
         self.stride = stride
-        self.use_se=use_se
+        self.use_se = use_se
         if (use_se):
-         self.se_block=SEModule(planes,16)
+            self.se_block = SEModule(planes, 16)
 
     def forward(self, x):
         identity = x
@@ -71,8 +75,8 @@ class IBasicBlock(nn.Module):
         out = self.prelu(out)
         out = self.conv2(out)
         out = self.bn3(out)
-        if(self.use_se):
-            out=self.se_block(out)
+        if (self.use_se):
+            out = self.se_block(out)
         if self.downsample is not None:
             identity = self.downsample(x)
         out += identity
@@ -81,14 +85,15 @@ class IBasicBlock(nn.Module):
 
 class IResNet(nn.Module):
     fc_scale = 7 * 7
+
     def __init__(self,
                  block, layers, dropout=0, num_features=512, zero_init_residual=False,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None, fp16=False,use_se=False, qs=1):
+                 groups=1, width_per_group=64, replace_stride_with_dilation=None, fp16=False, use_se=False, qs=1):
         super(IResNet, self).__init__()
         self.fp16 = fp16
         self.inplanes = 64
         self.dilation = 1
-        self.use_se=use_se
+        self.use_se = use_se
         if replace_stride_with_dilation is None:
             replace_stride_with_dilation = [False, False, False]
         if len(replace_stride_with_dilation) != 3:
@@ -99,26 +104,29 @@ class IResNet(nn.Module):
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.inplanes, eps=1e-05)
         self.prelu = nn.PReLU(self.inplanes)
-        self.layer1 = self._make_layer(block, 64, layers[0], stride=2 ,use_se=self.use_se)
+        self.layer1 = self._make_layer(block, 64, layers[0], stride=2, use_se=self.use_se)
         self.layer2 = self._make_layer(block,
                                        128,
                                        layers[1],
                                        stride=2,
-                                       dilate=replace_stride_with_dilation[0],use_se=self.use_se)
+                                       dilate=replace_stride_with_dilation[0], use_se=self.use_se)
         self.layer3 = self._make_layer(block,
                                        256,
                                        layers[2],
                                        stride=2,
-                                       dilate=replace_stride_with_dilation[1] ,use_se=self.use_se)
+                                       dilate=replace_stride_with_dilation[1], use_se=self.use_se)
         self.layer4 = self._make_layer(block,
                                        512,
                                        layers[3],
                                        stride=2,
-                                       dilate=replace_stride_with_dilation[2] ,use_se=self.use_se)
-        self.bn2 = nn.BatchNorm2d(512 * block.expansion, eps=1e-05,)
+                                       dilate=replace_stride_with_dilation[2], use_se=self.use_se)
+        self.bn2 = nn.BatchNorm2d(512 * block.expansion, eps=1e-05, )
         self.dropout = nn.Dropout(p=dropout, inplace=True)
+
+        self.pose_classifier = nn.Sequential(*[nn.LazyLinear(512),nn.LazyLinear(128),nn.LazyLinear(7)])
         self.fc = nn.Linear(512 * block.expansion * self.fc_scale, num_features)
         self.features = nn.BatchNorm1d(num_features, eps=1e-05)
+        self.qs = nn.Linear(num_features, 1)
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.normal_(m.weight, 0, 0.1)
@@ -131,7 +139,7 @@ class IResNet(nn.Module):
                 if isinstance(m, IBasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False,use_se=False):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
         previous_dilation = self.dilation
         if dilate:
@@ -145,7 +153,7 @@ class IResNet(nn.Module):
         layers = []
         layers.append(
             block(self.inplanes, planes, stride, downsample, self.groups,
-                  self.base_width, previous_dilation,use_se=use_se))
+                  self.base_width, previous_dilation, use_se=use_se))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(
@@ -153,7 +161,7 @@ class IResNet(nn.Module):
                       planes,
                       groups=self.groups,
                       base_width=self.base_width,
-                      dilation=self.dilation,use_se=use_se))
+                      dilation=self.dilation, use_se=use_se))
 
         return nn.Sequential(*layers)
 
@@ -169,22 +177,25 @@ class IResNet(nn.Module):
             x = self.bn2(x)
             x = torch.flatten(x, 1)
             x = self.dropout(x)
+        pose = self.pose_classifier(x)
         x = self.fc(x.float() if self.fp16 else x)
-
         x = self.features(x)
-        return x
+        qscore = self.qs(x)
+
+        return x,qscore,pose
 
 
 class IdentityIResNet(nn.Module):
     fc_scale = 7 * 7
+
     def __init__(self,
                  block, layers, dropout=0, num_features=512, zero_init_residual=False,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None, fp16=False,use_se=False):
+                 groups=1, width_per_group=64, replace_stride_with_dilation=None, fp16=False, use_se=False):
         super(IdentityIResNet, self).__init__()
         self.fp16 = fp16
         self.inplanes = 64
         self.dilation = 1
-        self.use_se=use_se
+        self.use_se = use_se
         if replace_stride_with_dilation is None:
             replace_stride_with_dilation = [False, False, False]
         if len(replace_stride_with_dilation) != 3:
@@ -195,30 +206,29 @@ class IdentityIResNet(nn.Module):
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.inplanes, eps=1e-05)
         self.prelu = nn.PReLU(self.inplanes)
-        self.layer1 = self._make_layer(block, 64, layers[0], stride=2 ,use_se=self.use_se)
+        self.layer1 = self._make_layer(block, 64, layers[0], stride=2, use_se=self.use_se)
         self.layer2 = self._make_layer(block,
                                        128,
                                        layers[1],
                                        stride=2,
-                                       dilate=replace_stride_with_dilation[0],use_se=self.use_se)
+                                       dilate=replace_stride_with_dilation[0], use_se=self.use_se)
         self.layer3 = self._make_layer(block,
                                        256,
                                        layers[2],
                                        stride=2,
-                                       dilate=replace_stride_with_dilation[1] ,use_se=self.use_se)
+                                       dilate=replace_stride_with_dilation[1], use_se=self.use_se)
         self.layer4 = self._make_layer(block,
                                        512,
                                        layers[3],
                                        stride=2,
-                                       dilate=replace_stride_with_dilation[2] ,use_se=self.use_se)
-        self.bn2 = nn.BatchNorm2d(512 * block.expansion, eps=1e-05,)
+                                       dilate=replace_stride_with_dilation[2], use_se=self.use_se)
+        self.bn2 = nn.BatchNorm2d(512 * block.expansion, eps=1e-05, )
         self.dropout = nn.Dropout(p=dropout, inplace=True)
         self.fc = nn.Linear(512 * block.expansion * self.fc_scale, num_features)
         self.features = nn.BatchNorm1d(num_features, eps=1e-05)
         nn.init.constant_(self.features.weight, 1.0)
         self.features.weight.requires_grad = False
 
-
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.normal_(m.weight, 0, 0.1)
@@ -231,7 +241,7 @@ class IdentityIResNet(nn.Module):
                 if isinstance(m, IBasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False,use_se=False):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
         previous_dilation = self.dilation
         if dilate:
@@ -245,7 +255,7 @@ class IdentityIResNet(nn.Module):
         layers = []
         layers.append(
             block(self.inplanes, planes, stride, downsample, self.groups,
-                  self.base_width, previous_dilation,use_se=use_se))
+                  self.base_width, previous_dilation, use_se=use_se))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(
@@ -253,7 +263,7 @@ class IdentityIResNet(nn.Module):
                       planes,
                       groups=self.groups,
                       base_width=self.base_width,
-                      dilation=self.dilation,use_se=use_se))
+                      dilation=self.dilation, use_se=use_se))
 
         return nn.Sequential(*layers)
 
@@ -274,11 +284,12 @@ class IdentityIResNet(nn.Module):
         x = self.features(x)
         return x
 
+
 class OnTopQS(nn.Module):
     def __init__(self,
                  num_features=512):
         super(OnTopQS, self).__init__()
-        self.qs=nn.Linear(num_features,1)
+        self.qs = nn.Linear(num_features, 1)
 
     def forward(self, x):
         return self.qs(x)
@@ -290,13 +301,12 @@ def _iresnet(arch, block, layers, pretrained, progress, **kwargs):
         raise ValueError()
     return model
 
+
 def _iresne_identity(arch, block, layers, pretrained, progress, **kwargs):
     model = IdentityIResNet(block, layers, **kwargs)
     if pretrained:
         raise ValueError()
     return model
-
-
 
 
 def iresnet18(pretrained=False, progress=True, **kwargs):
@@ -313,13 +323,17 @@ def iresnet50(pretrained=False, progress=True, **kwargs):
     return _iresnet('iresnet50', IBasicBlock, [3, 4, 14, 3], pretrained,
                     progress, **kwargs)
 
+
 def iresnet50_identity(pretrained=False, progress=True, **kwargs):
     return _iresne_identity('iresnet50', IBasicBlock, [3, 4, 14, 3], pretrained,
-                    progress, **kwargs)
+                            progress, **kwargs)
+
 
 def iresnet100(pretrained=False, progress=True, **kwargs):
     return _iresnet('iresnet100', IBasicBlock, [3, 13, 30, 3], pretrained,
                     progress, **kwargs)
+
+
 def _test():
     import torch
 
@@ -330,9 +344,9 @@ def _test():
     ]
 
     for model in models:
-
         net = model()
         print(net)
+
 
 if __name__ == "__main__":
     _test()

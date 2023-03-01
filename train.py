@@ -1,4 +1,4 @@
-from backbones.model import XFIQA
+from backbones.iresnet import iresnet50
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -20,7 +20,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         optimizer.zero_grad()
         image = data[0].to(device)
         pose = data[1].to(device)
-        pred_pose = model(image)
+        _, _, pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -37,12 +37,11 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
     all_pose_preds = []
     all_pose_labels = []
 
-
     for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        pred_pose= model(image)
+        _, _, pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -50,7 +49,6 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
         for i in range(len(data[1])):
             all_pose_labels.append(data[1][i])
             all_pose_preds.append(ppose[i])
-
 
     all_pose_labels = torch.tensor(all_pose_labels, dtype=int).resize(1, len(dataset)).squeeze(0)
     all_pose_preds = torch.tensor(all_pose_preds, dtype=int).resize(1, len(dataset)).squeeze(0)
@@ -69,8 +67,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = XFIQA(weight_path=args.weight1)
-    #if args.load:
+    model = iresnet50()
+    model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
+    # if args.load:
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
 
