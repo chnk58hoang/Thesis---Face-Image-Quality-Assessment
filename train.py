@@ -73,15 +73,15 @@ if __name__ == '__main__':
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
 
-    train_val_dataframe = pd.read_csv(args.csv).iloc[:80186, :]
-    train_df = train_val_dataframe.iloc[:60000, :]
-    val_df = train_val_dataframe.iloc[60000:, :]
+    train_val_dataframe = pd.read_csv(args.csv).iloc[:104000, :]
+    train_df = train_val_dataframe.iloc[:93600, :]
+    val_df = train_val_dataframe.iloc[93600:, :]
 
     train_dataset = ExFIQA(df=train_df)
     val_dataset = ExFIQA(df=val_df)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size)
-    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
     opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
