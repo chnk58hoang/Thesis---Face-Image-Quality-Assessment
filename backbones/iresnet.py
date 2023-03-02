@@ -177,9 +177,9 @@ class IResNet(nn.Module):
             x = self.bn2(x)
             x = torch.flatten(x, 1)
             x = self.dropout(x)
-        pose = self.pose_classifier(x)
         x = self.fc(x.float() if self.fp16 else x)
         x = self.features(x)
+        pose = self.pose_classifier(x)
         qscore = self.qs(x)
 
         return x,qscore,pose
