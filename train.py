@@ -73,7 +73,7 @@ if __name__ == '__main__':
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
 
-    train_val_dataframe = pd.read_csv(args.csv).iloc[:104000, :]
+    train_val_dataframe = pd.read_csv(args.csv).iloc[:114400, :]
     train_df = train_val_dataframe.iloc[:93600, :]
     val_df = train_val_dataframe.iloc[93600:, :]
 
