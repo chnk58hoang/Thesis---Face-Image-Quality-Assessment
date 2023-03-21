@@ -31,9 +31,9 @@ def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
         image = torch.Tensor(image)
         image.div_(255).sub_(0.5).div_(0.5)
         emb, qscore,_ = model(image)
-        print(img)
-        print(qscore / 2 - 0.2)
         cs = cosine_similarity(emb, piv_emb)
+        qscore= qscore/2 - 0.35
+        print(qscore)
         if qscore < q_threshold:
 
             rej += 1
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     all_sub_folders = os.listdir(args.data)
     all_sub_folders = sorted(all_sub_folders)
 
-    for subfolder in tqdm(all_sub_folders[200:]):
+    for subfolder in tqdm(all_sub_folders[:1]):
         image_path_list = glob.glob(os.path.join(args.data,subfolder,'*.png'))
         image_path_list = sorted(image_path_list)
         rej,fnm = get_fnmr(model,image_path_list,q_threshold=0.2)
