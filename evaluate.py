@@ -3,7 +3,7 @@ from torchvision import transforms
 from torch.nn.functional import cosine_similarity
 import torch
 import argparse
-from backbones.model import ExplainFIQA
+from backbones.iresnet import iresnet100
 import numpy as np
 import cv2
 import glob
@@ -51,8 +51,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainFIQA(weigth_path=args.weight1)
-    #model.load_state_dict(torch.load(args.weight1, map_location='cpu'),strict=False)
+    model = iresnet100()
+    model.load_state_dict(torch.load(args.weight1, map_location='cpu'),strict=False)
     model.to(device)
     model.eval()
 

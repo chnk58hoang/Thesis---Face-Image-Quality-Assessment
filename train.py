@@ -1,4 +1,4 @@
-from backbones.model import ExplainFIQA
+from backbones.iresnet import iresnet100
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -67,7 +67,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainFIQA(args.weight1)
+    model = iresnet100()
+    model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
     # if args.load:
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
@@ -83,7 +84,11 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
+    trainable_params = []
+    for name, p in model.named_parameters():
+        if 'layer1' in name or 'conv1' in name or 'bn1' in name or 'prelu' in name or 'pose_classifier' in name:
+            trainable_params.append(p)
+    opt = torch.optim.Adam(lr=1e-3, params=trainable_params)
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
     f1 = F1Score(task='multiclass', num_classes=7, average='none')
     trainer = Trainer(lr_scheduler)
