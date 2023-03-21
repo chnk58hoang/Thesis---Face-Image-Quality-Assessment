@@ -21,7 +21,6 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         image = data[0].to(device)
         pose = data[1].to(device)
         _, _, pred_pose = model(image)
-        print(pred_pose)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
