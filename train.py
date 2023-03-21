@@ -1,4 +1,4 @@
-from backbones.iresnet import iresnet50
+from backbones.iresnet import iresnet100
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = iresnet50()
+    model = iresnet100()
     model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
     # if args.load:
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
