@@ -21,6 +21,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         image = data[0].to(device)
         pose = data[1].to(device)
         _, _, pred_pose = model(image)
+        print(pred_pose)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -59,11 +60,11 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int)
+    parser.add_argument('--epochs', type=int,default=1)
     parser.add_argument('--csv', type=str)
     parser.add_argument('--weight1', type=str)
     parser.add_argument('--weight2', type=str)
-    parser.add_argument('--batch_size', type=int)
+    parser.add_argument('--batch_size', type=int,default=4)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

@@ -175,7 +175,7 @@ class IResNet(nn.Module):
             x = self.bn1(x)
             x = self.prelu(x)
             x = self.layer1(x)
-            pose = self.pose_classifier
+            pose = self.pose_classifier(x)
             x = self.layer2(x)
             x = self.layer3(x)
             x = self.layer4(x)
