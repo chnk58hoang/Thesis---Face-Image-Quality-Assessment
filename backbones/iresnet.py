@@ -135,6 +135,12 @@ class IResNet(nn.Module):
                 if isinstance(m, IBasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
+        for param in self.parameters():
+            param.requires_grad = False
+
+        for param in self.pose_classifier.parameters():
+            param.requires_grad = True
+
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False,use_se=False):
         downsample = None
         previous_dilation = self.dilation
@@ -173,9 +179,9 @@ class IResNet(nn.Module):
             x = self.bn2(x)
             x = torch.flatten(x, 1)
             x = self.dropout(x)
+        pose = self.pose_classifier(x)
         x = self.fc(x.float() if self.fp16 else x)
         x = self.features(x)
-        pose = self.pose_classifier(x)
         qs = self.qs(x)
         return x, qs,pose
 
