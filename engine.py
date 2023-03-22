@@ -2,7 +2,7 @@ import torch
 
 
 class Trainer():
-    def __init__(self, lr_scheduler, patience=5, save_path='best_model.pth', best_val_loss=float('inf')):
+    def __init__(self, lr_scheduler, patience=5, save_path='pose.pth', best_val_loss=float('inf')):
         self.lr_scheduler = lr_scheduler
         self.patience = patience
         self.save_path = save_path

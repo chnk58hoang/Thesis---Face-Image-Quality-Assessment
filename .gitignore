@@ -2,7 +2,7 @@
 __pycache__/
 resnet50_ft_weight.pkl
 data.csv
-best_model.pth
+pose.pth
 bestqscore.pth
-181952backbone.pth
+backbone.pth
 new_data.csv

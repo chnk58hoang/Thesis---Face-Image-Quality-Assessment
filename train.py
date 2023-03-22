@@ -1,4 +1,5 @@
 from backbones.model import PoseClassifier
+from backbones.model import iresnet100
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -20,7 +21,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         optimizer.zero_grad()
         image = data[0].to(device)
         pose = data[1].to(device)
-        pred_pose = model(image)
+        _, pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -41,7 +42,7 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        pred_pose = model(image)
+        _, pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -67,7 +68,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = PoseClassifier()
+    model = iresnet100(pose=True)
     model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
     # if args.load:
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)

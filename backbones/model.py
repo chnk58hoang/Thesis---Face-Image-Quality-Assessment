@@ -1,6 +1,7 @@
-from backbones.iresnet import IBasicBlock, conv1x1
+from backbones.iresnet import IBasicBlock, conv1x1, iresnet100
 import torch.nn as nn
 import torch
+from torchviz import make_dot
 
 
 class PoseClassifier(nn.Module):
@@ -19,7 +20,8 @@ class PoseClassifier(nn.Module):
         self.layer3 = self._make_layer(IBasicBlock, 256, 3, stride=2, use_se=True)
         self.layer4 = self._make_layer(IBasicBlock, 512, 3, stride=2, use_se=True)
 
-        self.classifier = nn.Sequential(*[nn.LazyLinear(64,bias=False),nn.LazyLinear(32,bias=False), nn.LazyLinear(7,bias=False)])
+        self.classifier = nn.Sequential(
+            *[nn.LazyLinear(64, bias=False), nn.LazyLinear(32, bias=False), nn.LazyLinear(7, bias=False)])
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
@@ -58,3 +60,21 @@ class PoseClassifier(nn.Module):
         x = torch.flatten(x, 1)
         pose = self.classifier(x)
         return pose
+
+
+class ExplainableFIQA(nn.Module):
+    def __init__(self, backbone_weight, pose_classify_weight):
+        super().__init__()
+        self.backbone = iresnet100()
+        self.pose_classifier = PoseClassifier()
+
+        self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
+        self.pose_classifier.load_state_dict(torch.load(pose_classify_weight, map_location='cpu'))
+
+    def forward(self, x):
+        emb, qs = self.backbone(x)
+        pose = self.pose_classifier(x)
+        return emb, qs, pose
+
+
+model = PoseClassifier()

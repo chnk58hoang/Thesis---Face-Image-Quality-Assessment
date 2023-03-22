@@ -1,15 +1,14 @@
 from matplotlib import pyplot as plt
-from torchvision import transforms
 from torch.nn.functional import cosine_similarity
 import torch
 import argparse
-from backbones.iresnet import iresnet100
+from backbones.model import ExplainableFIQA
 import numpy as np
 import cv2
 import glob
 from tqdm import tqdm
 import os
-from PIL import Image
+
 
 def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
     rej = 0
@@ -30,9 +29,11 @@ def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
         image = np.expand_dims(image, axis=0)
         image = torch.Tensor(image)
         image.div_(255).sub_(0.5).div_(0.5)
-        emb, qscore,_ = model(image)
+        emb, qscore,pose = model(image)
+        mag = torch.norm(emb,p=2)
         cs = cosine_similarity(emb, piv_emb)
-        print(qscore)
+        qscore = qscore / 3 - 0.25
+        print(mag)
         if qscore < q_threshold:
 
             rej += 1
@@ -45,13 +46,13 @@ def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default='/home/artorias/Downloads/multi_PIE_crop_128')
-    parser.add_argument('--weight1', type=str, default='181952backbone.pth')
+    parser.add_argument('--backbone', type=str, default='backbone.pth')
+    parser.add_argument('--pose', type=str, default='pose.pth')
     parser.add_argument('--batch_size', type=int, default=4)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = iresnet100()
-    model.load_state_dict(torch.load(args.weight1, map_location='cpu'),strict=False)
+    model = ExplainableFIQA(backbone_weight=args.backbone,pose_classify_weight=args.pose)
     model.to(device)
     model.eval()
 
