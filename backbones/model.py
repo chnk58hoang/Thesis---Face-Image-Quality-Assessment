@@ -1,7 +1,6 @@
 from backbones.iresnet import IBasicBlock, conv1x1, iresnet100
 import torch.nn as nn
 import torch
-from torchviz import make_dot
 
 
 class PoseClassifier(nn.Module):
@@ -66,15 +65,15 @@ class ExplainableFIQA(nn.Module):
     def __init__(self, backbone_weight, pose_classify_weight):
         super().__init__()
         self.backbone = iresnet100()
-        self.pose_classifier = PoseClassifier()
+        self.pose_classifier = iresnet100(pose=True)
 
         self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
         self.pose_classifier.load_state_dict(torch.load(pose_classify_weight, map_location='cpu'))
 
     def forward(self, x):
         emb, qs = self.backbone(x)
-        pose = self.pose_classifier(x)
-        return emb, qs, pose
+        emb_pose, pose = self.pose_classifier(x)
+        return emb, emb_pose, qs, pose
 
 
 model = PoseClassifier()
