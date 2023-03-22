@@ -19,7 +19,7 @@ class PoseClassifier(nn.Module):
         self.layer3 = self._make_layer(IBasicBlock, 256, 3, stride=2, use_se=True)
         self.layer4 = self._make_layer(IBasicBlock, 512, 3, stride=2, use_se=True)
 
-        self.classifier = nn.Sequential(*[nn.LazyLinear(32), nn.LazyLinear(7)])
+        self.classifier = nn.Sequential(*[nn.LazyLinear(64,bias=False),nn.LazyLinear(32,bias=False), nn.LazyLinear(7,bias=False)])
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None

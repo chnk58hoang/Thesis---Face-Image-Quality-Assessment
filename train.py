@@ -84,7 +84,7 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    opt = torch.optim.Adam(lr=1e-2, params=model.parameters())
+    opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
     f1 = F1Score(task='multiclass', num_classes=7, average='none')
     trainer = Trainer(lr_scheduler)
