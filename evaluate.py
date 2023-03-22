@@ -32,7 +32,6 @@ def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
         image.div_(255).sub_(0.5).div_(0.5)
         emb, qscore,_ = model(image)
         cs = cosine_similarity(emb, piv_emb)
-        qscore= qscore/2 - 0.35
         print(qscore)
         if qscore < q_threshold:
 

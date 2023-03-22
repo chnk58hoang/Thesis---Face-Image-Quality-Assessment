@@ -1,4 +1,4 @@
-from backbones.iresnet import iresnet100
+from backbones.model import PoseClassifier
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -20,7 +20,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         optimizer.zero_grad()
         image = data[0].to(device)
         pose = data[1].to(device)
-        _, _, pred_pose = model(image)
+        pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -41,7 +41,7 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        _, _, pred_pose = model(image)
+        pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -59,15 +59,15 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int,default=1)
+    parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--csv', type=str)
     parser.add_argument('--weight1', type=str)
     parser.add_argument('--weight2', type=str)
-    parser.add_argument('--batch_size', type=int,default=4)
+    parser.add_argument('--batch_size', type=int, default=4)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = iresnet100()
+    model = PoseClassifier()
     model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
     # if args.load:
     #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
@@ -84,11 +84,7 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    trainable_params = []
-    for name, p in model.named_parameters():
-        if 'layer1' in name or 'conv1' in name or 'bn1' in name or 'prelu' in name or 'pose_classifier' in name:
-            trainable_params.append(p)
-    opt = torch.optim.Adam(lr=1e-3, params=trainable_params)
+    opt = torch.optim.Adam(lr=1e-2, params=model.parameters())
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
     f1 = F1Score(task='multiclass', num_classes=7, average='none')
     trainer = Trainer(lr_scheduler)

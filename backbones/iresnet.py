@@ -175,7 +175,7 @@ class IResNet(nn.Module):
             x = self.bn1(x)
             x = self.prelu(x)
             x = self.layer1(x)
-            pose = self.pose_classifier(x)
+            #pose = self.pose_classifier(x)
             x = self.layer2(x)
             x = self.layer3(x)
             x = self.layer4(x)
@@ -185,7 +185,7 @@ class IResNet(nn.Module):
         x = self.fc(x.float() if self.fp16 else x)
         x = self.features(x)
         qs = self.qs(x)
-        return x, qs, pose
+        return x, qs
 
 
 class IdentityIResNet(nn.Module):
