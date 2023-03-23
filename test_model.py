@@ -11,21 +11,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv', type=str,default='/home/artorias/PycharmProjects/weights/new_data.csv')
     parser.add_argument('--weight1', type=str, default='pose.pth')
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--batch_size', type=int, default=32)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = PoseClassifier()
-    model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
+    model.load_state_dict(torch.load(args.weight1, map_location='cpu'))
     model.to(device)
 
-    train_val_dataframe = pd.read_csv(args.csv).iloc[:104000, :]
-    train_df = train_val_dataframe.iloc[:93600, :]
-    val_df = train_val_dataframe.iloc[93600:, :]
-    test_df = pd.read_csv(args.csv).iloc[104000:104200, :]
+    test_df = pd.read_csv(args.csv).iloc[102400:, :]
 
-    train_dataset = ExFIQA(df=train_df)
-    val_dataset = ExFIQA(df=val_df)
+
     test_dataset = ExFIQA(df=test_df)
 
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size)
