@@ -20,7 +20,7 @@ def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
     piv_img = np.expand_dims(piv_img,axis=0)
     piv_img = torch.Tensor(piv_img)
     piv_img.div_(255).sub_(0.5).div_(0.5)
-    piv_emb, _,_ = model(piv_img)
+    piv_emb,_,_ = model(piv_img)
 
     for img in all_imgs:
         image = cv2.imread(img)
@@ -29,16 +29,11 @@ def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
         image = np.expand_dims(image, axis=0)
         image = torch.Tensor(image)
         image.div_(255).sub_(0.5).div_(0.5)
-        emb, qscore,pose = model(image)
-        mag = torch.norm(emb,p=2)
-        cs = cosine_similarity(emb, piv_emb)
-        qscore = qscore / 3 - 0.25
-        print(mag)
-        if qscore < q_threshold:
+        emb,qscore,pose = model(image)
+        cs  = cosine_similarity(emb,piv_emb)
+        print(cs)
 
-            rej += 1
-        elif cs < s_threshold:
-            fnm += 1
+
 
     return rej, fnm
 
@@ -47,7 +42,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default='/home/artorias/Downloads/multi_PIE_crop_128')
     parser.add_argument('--backbone', type=str, default='backbone.pth')
-    parser.add_argument('--pose', type=str, default='pose.pth')
+    parser.add_argument('--pose', type=str, default='best_model.pth')
     parser.add_argument('--batch_size', type=int, default=4)
     args = parser.parse_args()
 

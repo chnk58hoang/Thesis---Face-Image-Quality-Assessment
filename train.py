@@ -1,5 +1,4 @@
 from backbones.model import PoseClassifier
-from backbones.model import iresnet100
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -21,7 +20,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         optimizer.zero_grad()
         image = data[0].to(device)
         pose = data[1].to(device)
-        _, pred_pose = model(image)
+        pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -42,7 +41,7 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        _, pred_pose = model(image)
+        pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -68,13 +67,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = iresnet100(pose=True)
+    model = PoseClassifier()
     model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
-    # if args.load:
-    #    model.load_state_dict(torch.load(args.weight2, map_location='cpu'), strict=False)
     model.to(device)
 
-    train_val_dataframe = pd.read_csv(args.csv).iloc[:114400, :]
+    train_val_dataframe = pd.read_csv(args.csv).iloc[:102400, :]
     train_df = train_val_dataframe.iloc[:93600, :]
     val_df = train_val_dataframe.iloc[93600:, :]
 
@@ -85,11 +82,8 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    train_params = []
-    for name,p in model.named_parameters():
-        if 'features' in name or 'fc' in name or 'pose_classifier' in name:
-            train_params.append(p)
-    opt = torch.optim.Adam(lr=1e-3, params=train_params)
+
+    opt = torch.optim.Adam(lr=1e-3, params=model.parameters())
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
     f1 = F1Score(task='multiclass', num_classes=7, average='none')
     trainer = Trainer(lr_scheduler)

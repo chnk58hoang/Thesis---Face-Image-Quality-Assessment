@@ -6,4 +6,4 @@ pose.pth
 bestqscore.pth
 backbone.pth
 new_data.csv
-pose_1.pth
+best_model.pth

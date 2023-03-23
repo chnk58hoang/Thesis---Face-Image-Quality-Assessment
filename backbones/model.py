@@ -14,13 +14,12 @@ class PoseClassifier(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.prelu = nn.PReLU(num_parameters=64)
 
-        self.layer1 = self._make_layer(IBasicBlock, 64, 3, stride=2, use_se=True)
-        self.layer2 = self._make_layer(IBasicBlock, 128, 5, stride=2, use_se=True)
+        self.layer1 = self._make_layer(IBasicBlock, 64, 1, stride=2, use_se=True)
+        self.layer2 = self._make_layer(IBasicBlock, 128, 3, stride=2, use_se=True)
         self.layer3 = self._make_layer(IBasicBlock, 256, 3, stride=2, use_se=True)
-        self.layer4 = self._make_layer(IBasicBlock, 512, 3, stride=2, use_se=True)
+        self.layer4 = self._make_layer(IBasicBlock, 512, 1, stride=2, use_se=True)
 
-        self.classifier = nn.Sequential(
-            *[nn.LazyLinear(64, bias=False), nn.LazyLinear(32, bias=False), nn.LazyLinear(7, bias=False)])
+        self.classifier = nn.Linear(512,7)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
@@ -65,15 +64,14 @@ class ExplainableFIQA(nn.Module):
     def __init__(self, backbone_weight, pose_classify_weight):
         super().__init__()
         self.backbone = iresnet100()
-        self.pose_classifier = iresnet100(pose=True)
+        self.pose_classifier = PoseClassifier()
 
         self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
         self.pose_classifier.load_state_dict(torch.load(pose_classify_weight, map_location='cpu'))
 
     def forward(self, x):
         emb, qs = self.backbone(x)
-        emb_pose, pose = self.pose_classifier(x)
-        return emb, emb_pose, qs, pose
+        pose = self.pose_classifier(x)
+        return emb, qs, pose
 
 
-model = PoseClassifier()
