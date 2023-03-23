@@ -18,7 +18,7 @@ class PoseClassifier(nn.Module):
         self.layer2 = self._make_layer(IBasicBlock, 128, 3, stride=2, use_se=True)
         self.layer3 = self._make_layer(IBasicBlock, 256, 3, stride=2, use_se=True)
         self.layer4 = self._make_layer(IBasicBlock, 512, 1, stride=2, use_se=True)
-
+        self.fc = nn.LazyLinear(512)
         self.classifier = nn.Linear(512,7)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
@@ -56,6 +56,7 @@ class PoseClassifier(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
         x = torch.flatten(x, 1)
+        x = self.fc(x)
         pose = self.classifier(x)
         return pose
 
