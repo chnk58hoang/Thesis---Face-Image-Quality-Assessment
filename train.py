@@ -20,7 +20,7 @@ def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
         optimizer.zero_grad()
         image = data[0].to(device)
         pose = data[1].to(device)
-        pred_pose = model(image)
+        _,_,pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
@@ -41,7 +41,7 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
         count += 1
         image = data[0].to(device)
         pose = data[1].to(device)
-        pred_pose = model(image)
+        _,_,pred_pose = model(image)
         pose_loss = loss_fn(pred_pose, pose)
 
         train_loss += pose_loss.item()
