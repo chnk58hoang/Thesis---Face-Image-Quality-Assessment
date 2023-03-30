@@ -1,4 +1,4 @@
-from iresnet import iresnet100
+from backbones.iresnet import iresnet100
 import torch.nn as nn
 import torch
 
