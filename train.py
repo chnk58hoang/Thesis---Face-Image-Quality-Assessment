@@ -64,6 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight1', type=str)
     parser.add_argument('--weight2', type=str)
     parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--lr',default=1e-2,type=float)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -83,7 +84,7 @@ if __name__ == '__main__':
 
     loss_fn = nn.CrossEntropyLoss()
 
-    opt = torch.optim.Adam(lr=1e-1, params=model.pose_classifier.parameters())
+    opt = torch.optim.Adam(lr=args.lr, params=model.pose_classifier.parameters())
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(patience=1, factor=0.2, optimizer=opt)
     f1 = F1Score(task='multiclass', num_classes=7, average='none')
     trainer = Trainer(lr_scheduler)
