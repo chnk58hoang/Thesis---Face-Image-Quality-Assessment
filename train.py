@@ -67,7 +67,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainableFIQA(backbone_weight='backbone.pth')
+    model = ExplainableFIQA(backbone_weight=args.weight1)
     model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
     model.to(device)
 
