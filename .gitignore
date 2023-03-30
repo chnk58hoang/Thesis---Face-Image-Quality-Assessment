@@ -2,8 +2,9 @@
 __pycache__/
 resnet50_ft_weight.pkl
 data.csv
-pose.pth
+weights/pose.pth
 bestqscore.pth
-backbone.pth
+weights/backbone.pth
 new_data.csv
 best_model.pth
+magface_epoch_00025.pth

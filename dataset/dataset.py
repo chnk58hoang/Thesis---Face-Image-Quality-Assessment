@@ -22,3 +22,6 @@ class ExFIQA(Dataset):
         image = Image.open(img_path)
         image = self.image_transform(image)
         return image, int(pose)
+
+
+

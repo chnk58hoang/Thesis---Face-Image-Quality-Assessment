@@ -1,63 +1,57 @@
-from matplotlib import pyplot as plt
-from torch.nn.functional import cosine_similarity
+import numpy as np
 import torch
 import argparse
-from backbones.model import ExplainableFIQA
-import numpy as np
-import cv2
+from backbones.iresnet import iresnet100
 import glob
-from tqdm import tqdm
 import os
+from PIL import Image
+from torchvision import transforms
+import numpy as np
+import matplotlib.pyplot as plt
+
+t = transforms.Compose([transforms.ToTensor(), transforms.Resize(112)])
 
 
-def get_fnmr(model, all_imgs, q_threshold,s_threshold=0.3):
-    rej = 0
-    fnm = 0
-    pivot = all_imgs.pop(64)
-    piv_img = cv2.imread(pivot)
-    piv_img = cv2.resize(piv_img, (112, 112))
-    piv_img = np.transpose(piv_img, (2, 0, 1))
-    piv_img = np.expand_dims(piv_img,axis=0)
-    piv_img = torch.Tensor(piv_img)
-    piv_img.div_(255).sub_(0.5).div_(0.5)
-    piv_emb,_,_ = model(piv_img)
-
-    for img in all_imgs:
-        image = cv2.imread(img)
-        image = cv2.resize(image, (112, 112))
-        image = np.transpose(image, (2, 0, 1))
-        image = np.expand_dims(image, axis=0)
-        image = torch.Tensor(image)
-        image.div_(255).sub_(0.5).div_(0.5)
-        emb,qscore,pose = model(image)
-        cs  = cosine_similarity(emb,piv_emb)
-        print(cs)
+def process_grad(gradient, a=10 ** 7.5, b=2):
+    grad = abs(gradient)
+    x = np.mean(grad, axis=0)
+    x = 1 - (1 / (1 + (a * x ** b)))
+    return x
 
 
-
-    return rej, fnm
+def get_fnmr(model1, pivot, q_threshold, s_threshold=0.3):
+    piv_img = Image.open(pivot)
+    piv_img = t(piv_img)
+    piv_img.requires_grad = True
+    piv_img = piv_img.unsqueeze(0)
+    piv_emb1, qs = model1(piv_img)
+    qs = qs / 2 - 0.3
+    grad = torch.autograd.grad(qs, piv_img)
+    grad = grad[0].numpy()
+    g = np.reshape(grad, [3, grad.shape[2], grad.shape[3]])
+    pgg = process_grad(g)
+    plt.imshow(pgg, cmap=plt.get_cmap('RdYlGn'), vmin=0, vmax=1)
+    plt.axis('off')
+    plt.savefig('fig2.png', bbox_inches='tight', pad_inches=0)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, default='/home/artorias/Downloads/multi_PIE_crop_128')
+    parser.add_argument('--data', type=str, default='/home/artorias/Downloads/MeGlass_120x120')
     parser.add_argument('--backbone', type=str, default='backbone.pth')
-    parser.add_argument('--pose', type=str, default='best_model.pth')
+    parser.add_argument('--pose', type=str, default='pose.pth')
     parser.add_argument('--batch_size', type=int, default=4)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainableFIQA(backbone_weight=args.backbone,pose_classify_weight=args.pose)
-    model.to(device)
-    model.eval()
+    model1 = iresnet100()
+    model1.load_state_dict(torch.load('weights/backbone.pth', map_location='cpu'))
+    model1.eval()
 
     all_sub_folders = os.listdir(args.data)
     all_sub_folders = sorted(all_sub_folders)
 
-    for subfolder in tqdm(all_sub_folders[:1]):
-        image_path_list = glob.glob(os.path.join(args.data,subfolder,'*.png'))
-        image_path_list = sorted(image_path_list)
-        rej,fnm = get_fnmr(model,image_path_list,q_threshold=0.2)
-        print(rej,fnm)
-
-
+    subfolder = all_sub_folders[0]
+    image_path_list = glob.glob(os.path.join(args.data, '*.jpg'))
+    image_path_list = sorted(image_path_list)
+    get_fnmr(model1, pivot='7276470@N03_identity_3@13551953534_4.jpg', q_threshold=0.2)
