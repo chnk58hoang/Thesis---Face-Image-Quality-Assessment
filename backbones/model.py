@@ -8,12 +8,12 @@ class ExplainableFIQA(nn.Module):
         super().__init__()
         self.fp16 = False
         self.dilation = 1
-        self.inplanes = 256
+        self.inplanes = 512
         self.groups = 1
         self.base_width = 64
         self.backbone = iresnet100()
-        self.class_branch1 = self._make_layer(IBasicBlock, 256, 3, stride=2, use_se=True)
-        self.class_branch2 = self._make_layer(IBasicBlock, 128, 3, stride=2, use_se=True)
+        self.class_branch1 = self._make_layer(IBasicBlock, 512, 1, stride=2, use_se=True)
+        self.class_branch2 = self._make_layer(IBasicBlock, 128, 1, stride=2, use_se=True)
         self.fc1 = nn.Linear(2048, 128)
         self.fc2 = nn.Linear(128, num_classes)
         self.pose_classifier = nn.Sequential(
@@ -54,8 +54,8 @@ class ExplainableFIQA(nn.Module):
             x = self.backbone.layer1(x)
             x = self.backbone.layer2(x)
             x = self.backbone.layer3(x)
-            pose = self.pose_classifier(x)
             x = self.backbone.layer4(x)
+            pose = self.pose_classifier(x)
             x = self.backbone.bn2(x)
             x = torch.flatten(x, 1)
             x = self.backbone.dropout(x)
