@@ -14,11 +14,11 @@ class ExplainableFIQA(nn.Module):
         self.backbone = iresnet100()
         self.class_branch1 = self._make_layer(IBasicBlock, 512, 1, stride=2, use_se=True)
         self.class_branch2 = self._make_layer(IBasicBlock, 128, 1, stride=2, use_se=True)
-        self.fc1 = nn.Linear(2048, 128)
+        self.fc1 = nn.Linear(512, 128)
         self.fc2 = nn.Linear(128, num_classes)
         self.pose_classifier = nn.Sequential(
             *[self.class_branch1, self.class_branch2, nn.Flatten(start_dim=1), self.fc1, self.fc2])
-        self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
+        #self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
@@ -63,3 +63,4 @@ class ExplainableFIQA(nn.Module):
         x = self.backbone.features(x)
         qs = self.backbone.qs(x)
         return x, qs, pose
+
