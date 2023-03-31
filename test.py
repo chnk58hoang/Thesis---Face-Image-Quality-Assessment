@@ -24,7 +24,7 @@ if __name__ == '__main__':
     train_val_dataframe = pd.read_csv(args.csv).iloc[:102400, :]
     train_df = train_val_dataframe.iloc[:93600, :]
     val_df = train_val_dataframe.iloc[93600:, :]
-    test_df = pd.read_csv(args.csv).iloc[102400:103400, :]
+    test_df = pd.read_csv(args.csv).iloc[102400:102500, :]
 
     train_dataset = ExFIQA(df=train_df)
     val_dataset = ExFIQA(df=val_df)
@@ -42,7 +42,9 @@ if __name__ == '__main__':
     for data in test_dataloader:
         image = data[0].to(device)
         pose = data[1].to(device)
-        _, _, pred_pose = model(image)
+        _, qs, pred_pose = model(image)
+
+        print(qs)
         ppose = pred_pose.max(1)[1]
         for i in range(len(data[1])):
             all_pose_labels.append(data[1][i])

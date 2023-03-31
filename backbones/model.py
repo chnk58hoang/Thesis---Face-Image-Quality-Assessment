@@ -20,6 +20,9 @@ class ExplainableFIQA(nn.Module):
             *[self.class_branch1, self.class_branch2, nn.Flatten(start_dim=1), self.fc1, self.fc2])
         self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
 
+        for param in self.backbone.parameters():
+            param.requires_grad = False
+
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
         previous_dilation = self.dilation
