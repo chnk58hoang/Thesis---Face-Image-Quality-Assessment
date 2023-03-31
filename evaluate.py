@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', type=str, default='/home/artorias/Downloads/MeGlass_120x120')
     parser.add_argument('--backbone', type=str, default='backbone.pth')
     parser.add_argument('--pose', type=str, default='pose.pth')
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--batch_size', type=int, default=1)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

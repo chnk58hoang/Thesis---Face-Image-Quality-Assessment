@@ -2,7 +2,7 @@ from backbones.iresnet import iresnet100, conv1x1, IBasicBlock
 import torch.nn as nn
 import torch
 
-
+"""
 class ExplainableFIQA(nn.Module):
     def __init__(self, backbone_weight=None, num_classes=7):
         super().__init__()
@@ -18,10 +18,8 @@ class ExplainableFIQA(nn.Module):
         self.fc2 = nn.Linear(128, num_classes)
         self.pose_classifier = nn.Sequential(
             *[self.class_branch1, self.class_branch2, nn.Flatten(start_dim=1), self.fc1, self.fc2])
-        self.backbone.load_state_dict(torch.load(backbone_weight))
+        self.backbone.load_state_dict(torch.load(backbone_weight,map_location='cpu'))
 
-        for param in self.backbone.parameters():
-            param.requires_grad = False
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
@@ -51,19 +49,36 @@ class ExplainableFIQA(nn.Module):
 
     def forward(self, x):
         with torch.cuda.amp.autocast(self.fp16):
-            x = self.backbone.conv1(x)
-            x = self.backbone.bn1(x)
-            x = self.backbone.prelu(x)
-            x = self.backbone.layer1(x)
-            x = self.backbone.layer2(x)
-            x = self.backbone.layer3(x)
-            x = self.backbone.layer4(x)
-            pose = self.pose_classifier(x)
-            x = self.backbone.bn2(x)
-            x = torch.flatten(x, 1)
-            x = self.backbone.dropout(x)
-        x = self.backbone.fc(x.float() if self.fp16 else x)
-        x = self.backbone.features(x)
-        qs = self.backbone.qs(x)
+            with torch.no_grad():
+                x = self.backbone.conv1(x)
+                x = self.backbone.bn1(x)
+                x = self.backbone.prelu(x)
+                x = self.backbone.layer1(x)
+                x = self.backbone.layer2(x)
+                x = self.backbone.layer3(x)
+                x = self.backbone.layer4(x)
+                pose = self.pose_classifier(x)
+                x = self.backbone.bn2(x)
+                x = torch.flatten(x, 1)
+                x = self.backbone.dropout(x)
+                x = self.backbone.fc(x.float() if self.fp16 else x)
+                x = self.backbone.features(x)
+                qs = self.backbone.qs(x)
         return x, qs, pose
 
+"""
+
+
+class ExplainableFIQA(nn.Module):
+    def __init__(self, backbone_weight):
+        super().__init__()
+        self.backbone = iresnet100()
+        self.pose_classifier = nn.Sequential(
+            *[nn.LazyLinear(256), nn.LazyLinear(128), nn.LazyLinear(64), nn.LazyLinear(32), nn.LazyLinear(7)])
+
+        self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
+
+    def forward(self, x):
+        emb, qs = self.backbone(x)
+        pose = self.pose_classifier(emb)
+        return emb, qs, pose

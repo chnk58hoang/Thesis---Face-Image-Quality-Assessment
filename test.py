@@ -11,18 +11,19 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--csv', type=str)
     parser.add_argument('--weight1', type=str)
-    parser.add_argument('--weight2', type=str)
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--weight2', type=str,default='weights/backbone.pth')
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--lr', default=1e-2, type=float)
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainableFIQA(backbone_weight=args.weight1)
-    model.load_state_dict(torch.load(args.weight1, map_location='cpu'), strict=False)
+    model = ExplainableFIQA(backbone_weight=args.weight2)
+    model.load_state_dict(torch.load(args.weight1, map_location='cpu'))
+    model.backbone.load_state_dict(torch.load(args.weight2,map_location='cpu'))
     model.to(device)
-
+    model.eval()
     train_val_dataframe = pd.read_csv(args.csv).iloc[:102400, :]
-    train_df = train_val_dataframe.iloc[:93600, :]
+    train_df = train_val_dataframe.iloc[:100, :]
     val_df = train_val_dataframe.iloc[93600:, :]
     test_df = pd.read_csv(args.csv).iloc[102400:102500, :]
 
@@ -39,11 +40,11 @@ if __name__ == '__main__':
     all_pose_preds = []
     all_pose_labels = []
 
-    for data in test_dataloader:
+
+    for data in train_dataloader:
         image = data[0].to(device)
         pose = data[1].to(device)
         _, qs, pred_pose = model(image)
-
         print(qs)
         ppose = pred_pose.max(1)[1]
         for i in range(len(data[1])):
