@@ -69,6 +69,7 @@ if __name__ == '__main__':
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model = ExplainableFIQA(backbone_weight=args.weight1)
+    model.to(device)
 
     train_val_dataframe = pd.read_csv(args.csv).iloc[:102400, :]
     train_df = train_val_dataframe.iloc[:93600, :]
