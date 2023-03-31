@@ -46,7 +46,7 @@ if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model1 = iresnet100()
     model1.load_state_dict(torch.load('weights/backbone.pth', map_location='cpu'))
-    model1.eval()
+    model1.train()
 
     all_sub_folders = os.listdir(args.data)
     all_sub_folders = sorted(all_sub_folders)

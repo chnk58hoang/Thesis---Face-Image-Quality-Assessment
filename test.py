@@ -17,9 +17,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainableFIQA(backbone_weight=args.weight2)
+    model = ExplainableFIQA(backbone_weight=None)
     model.load_state_dict(torch.load(args.weight1, map_location='cpu'))
-    model.backbone.load_state_dict(torch.load(args.weight2,map_location='cpu'))
+    #model.backbone.load_state_dict(torch.load(args.weight2,map_location='cpu'))
     model.to(device)
     model.eval()
     train_val_dataframe = pd.read_csv(args.csv).iloc[:102400, :]
