@@ -18,7 +18,7 @@ class ExplainableFIQA(nn.Module):
         self.fc2 = nn.Linear(128, num_classes)
         self.pose_classifier = nn.Sequential(
             *[self.class_branch1, self.class_branch2, nn.Flatten(start_dim=1), self.fc1, self.fc2])
-        self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
+        self.backbone.load_state_dict(torch.load(backbone_weight))
 
         for param in self.backbone.parameters():
             param.requires_grad = False
