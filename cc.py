@@ -1,14 +1,9 @@
-import torch.nn as nn
 import torch
+from backbones.model import ExplainableFIQA
 
-st1 = torch.load('weights/backbone.pth',map_location='cpu')
-st2 = torch.load('weights/pose1.pth',map_location='cpu')
-
-res = []
-for name in st2:
-    sname = name.replace('backbone.','')
-    if sname in st1 and not torch.equal(st1[sname],st2[name]):
-        res.append((sname,name)
-
-print(res)
+model = ExplainableFIQA()
+for m in model.modules():
+    if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+        m.track_running_stats = False
+        m.affine = True
 

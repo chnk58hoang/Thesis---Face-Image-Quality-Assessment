@@ -3,9 +3,6 @@ import torch.nn as nn
 import torch
 
 
-def set_bn_eval(module):
-    if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
-        module.eval()
 
 
 class ExplainableFIQA(nn.Module):
@@ -23,11 +20,12 @@ class ExplainableFIQA(nn.Module):
         self.fc2 = nn.Linear(128, num_classes)
         self.pose_classifier = nn.Sequential(
             *[self.class_branch1, self.class_branch2, nn.Flatten(start_dim=1), self.fc1, self.fc2])
-        self.backbone.load_state_dict(torch.load(backbone_weight))
+        if backbone_weight:
+            self.backbone.load_state_dict(torch.load(backbone_weight,map_location='cpu'))
 
         for param in self.backbone.parameters():
             param.requires_grad = False
-        self.backbone.apply(set_bn_eval)
+
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None
@@ -64,8 +62,7 @@ class ExplainableFIQA(nn.Module):
             x = self.backbone.layer2(x)
             x = self.backbone.layer3(x)
             x = self.backbone.layer4(x)
-            x_clone = x.detach().clone().requires_grad_(True)
-            pose = self.pose_classifier(x_clone)
+            pose = self.pose_classifier(x)
             x = self.backbone.bn2(x)
             x = torch.flatten(x, 1)
             x = self.backbone.dropout(x)

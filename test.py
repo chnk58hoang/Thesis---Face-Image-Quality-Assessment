@@ -1,4 +1,5 @@
 from backbones.model import ExplainableFIQA
+from backbones.iresnet import iresnet100
 from dataset.dataset import ExFIQA
 from torch.utils.data import DataLoader
 import pandas as pd
@@ -17,8 +18,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = ExplainableFIQA(backbone_weight=None)
-    model.load_state_dict(torch.load(args.weight1, map_location='cpu'))
+    model = iresnet100()
+    model.load_state_dict(torch.load(args.weight1, map_location='cpu'),strict=False)
     #model.backbone.load_state_dict(torch.load(args.weight2,map_location='cpu'))
     model.to(device)
     model.eval()
@@ -35,24 +36,14 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
 
-    f1 = F1Score(task='multiclass', num_classes=7, average='none')
+    with torch.no_grad():
 
-    all_pose_preds = []
-    all_pose_labels = []
+        for data in train_dataloader:
+            image = data[0].to(device)
+            pose = data[1].to(device)
+            _, qs = model(image)
+            print(qs/2-0.2)
 
 
-    for data in train_dataloader:
-        image = data[0].to(device)
-        pose = data[1].to(device)
-        _, qs, pred_pose = model(image)
-        print(qs/2)
-        ppose = pred_pose.max(1)[1]
-        for i in range(len(data[1])):
-            all_pose_labels.append(data[1][i])
-            all_pose_preds.append(ppose[i])
 
-    all_pose_labels = torch.tensor(all_pose_labels, dtype=int).resize(1, len(test_dataset)).squeeze(0)
-    all_pose_preds = torch.tensor(all_pose_preds, dtype=int).resize(1, len(test_dataset)).squeeze(0)
-    f1_pose = f1(all_pose_preds, all_pose_labels)
 
-    print(f1_pose)

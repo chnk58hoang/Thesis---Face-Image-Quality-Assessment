@@ -12,6 +12,11 @@ from torchmetrics.classification import F1Score
 
 def train_model(model, dataloader, dataset, optimizer, loss_fn, device):
     model.train()
+    print('Freezing BatchNorm layers...')
+    for m in model.modules():
+        if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+            m.eval()
+
     train_loss = 0.0
     count = 0
 
