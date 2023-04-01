@@ -8,3 +8,4 @@ weights/backbone.pth
 new_data.csv
 best_model.pth
 magface_epoch_00025.pth
+weights/pose1.pth

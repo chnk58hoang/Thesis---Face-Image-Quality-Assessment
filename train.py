@@ -36,25 +36,25 @@ def valid_model(model, dataloader, dataset, loss_fn, device, f1):
     count = 0
     all_pose_preds = []
     all_pose_labels = []
+    with torch.no_grad():
+        for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
+            count += 1
+            image = data[0].to(device)
+            pose = data[1].to(device)
+            _,_,pred_pose = model(image)
+            pose_loss = loss_fn(pred_pose, pose)
 
-    for idx, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
-        count += 1
-        image = data[0].to(device)
-        pose = data[1].to(device)
-        _,_,pred_pose = model(image)
-        pose_loss = loss_fn(pred_pose, pose)
+            train_loss += pose_loss.item()
+            ppose = pred_pose.max(1)[1]
+            for i in range(len(data[1])):
+                all_pose_labels.append(data[1][i])
+                all_pose_preds.append(ppose[i])
 
-        train_loss += pose_loss.item()
-        ppose = pred_pose.max(1)[1]
-        for i in range(len(data[1])):
-            all_pose_labels.append(data[1][i])
-            all_pose_preds.append(ppose[i])
+        all_pose_labels = torch.tensor(all_pose_labels, dtype=int).resize(1, len(dataset)).squeeze(0)
+        all_pose_preds = torch.tensor(all_pose_preds, dtype=int).resize(1, len(dataset)).squeeze(0)
+        f1_pose = f1(all_pose_preds, all_pose_labels)
 
-    all_pose_labels = torch.tensor(all_pose_labels, dtype=int).resize(1, len(dataset)).squeeze(0)
-    all_pose_preds = torch.tensor(all_pose_preds, dtype=int).resize(1, len(dataset)).squeeze(0)
-    f1_pose = f1(all_pose_preds, all_pose_labels)
-
-    return train_loss / count, f1_pose
+        return train_loss / count, f1_pose
 
 
 if __name__ == '__main__':

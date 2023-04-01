@@ -45,7 +45,7 @@ if __name__ == '__main__':
         image = data[0].to(device)
         pose = data[1].to(device)
         _, qs, pred_pose = model(image)
-        print(qs)
+        print(qs/2)
         ppose = pred_pose.max(1)[1]
         for i in range(len(data[1])):
             all_pose_labels.append(data[1][i])
