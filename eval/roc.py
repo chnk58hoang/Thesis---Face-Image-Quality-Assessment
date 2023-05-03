@@ -1,4 +1,4 @@
-import  numpy as np
+import numpy as np
 import operator
 
 def calculate_roc(gscores, iscores, ds_scores=False, rates=True):
@@ -138,11 +138,6 @@ def get_eer_threshold(gen_scores, imp_scores, hformat=False, ds_scores=False):
 
     ind, fmr10000 = get_fmr_op(fmr, fnmr, 0.0001)
     fmr10000_th = thrs[ind]
-
-
-
-
-
 
 
     return fmr100_th, fmr1000_th, fmr10000_th

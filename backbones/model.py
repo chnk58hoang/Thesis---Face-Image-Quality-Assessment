@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch
 
 
-
-
 class ExplainableFIQA(nn.Module):
     def __init__(self, backbone_weight=None, num_classes=7):
         super().__init__()
@@ -21,11 +19,10 @@ class ExplainableFIQA(nn.Module):
         self.pose_classifier = nn.Sequential(
             *[self.class_branch1, self.class_branch2, nn.Flatten(start_dim=1), self.fc1, self.fc2])
         if backbone_weight:
-            self.backbone.load_state_dict(torch.load(backbone_weight,map_location='cpu'))
+            self.backbone.load_state_dict(torch.load(backbone_weight, map_location='cpu'))
 
         for param in self.backbone.parameters():
             param.requires_grad = False
-
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, use_se=False):
         downsample = None

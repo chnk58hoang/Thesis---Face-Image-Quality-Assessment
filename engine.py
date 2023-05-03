@@ -1,6 +1,4 @@
 import torch
-
-
 class Trainer():
     def __init__(self, lr_scheduler, patience=3, save_path='pose.pth', best_val_loss=float('inf')):
         self.lr_scheduler = lr_scheduler
