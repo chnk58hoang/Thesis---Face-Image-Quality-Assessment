@@ -8,6 +8,7 @@ My approach was based on method proposed in [CR-FIQA](https://arxiv.org/pdf/2112
 
 # Result
 This is my simple UI
+<p align="center"><img src="./UI.pdf"></p>
 
 
 
